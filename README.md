@@ -20,6 +20,8 @@ A self-service developer platform where a developer fills out a form in Port.io,
 No kubectl. No manual YAML. No unsafe deployments reaching the cluster.
 
 ## Architecture
+
+```
 Developer → Port.io Self-Service UI
 ↓
 GitHub Actions Workflow
@@ -44,6 +46,7 @@ k3d cluster (ai-idp)
 aiops-anomaly-detector (monitoring)
 ↓
 Port.io Scorecard update
+```
 
 ## Screenshots
 
@@ -151,9 +154,12 @@ Total                                   51 tests  0 real API calls in unit suite
 | Cost < $50/month | Gold | Estimated monthly cost |
 
 ## ArgoCD App-of-Apps
+
+```
 idp-app-of-apps  (watches argocd/apps/)
 ├── dev-services      (watches gitops/overlays/dev/)
 └── staging-services  (watches gitops/overlays/staging/)
+```
 
 ## Related Projects
 
