@@ -1,7 +1,12 @@
 {
   "identifier": "production_readiness",
   "title": "Production Readiness",
-  "blueprint": "idp_service",
+  "levels": [
+    { "color": "paleBlue", "title": "Basic" },
+    { "color": "bronze",   "title": "Bronze" },
+    { "color": "silver",   "title": "Silver" },
+    { "color": "gold",     "title": "Gold" }
+  ],
   "rules": [
     {
       "identifier": "has_owner",
@@ -10,10 +15,7 @@
       "query": {
         "combinator": "and",
         "conditions": [
-          {
-            "operator": "isNotEmpty",
-            "property": "owner"
-          }
+          { "operator": "isNotEmpty", "property": "owner" }
         ]
       }
     },
@@ -24,41 +26,18 @@
       "query": {
         "combinator": "and",
         "conditions": [
-          {
-            "operator": "=",
-            "property": "monitoring_enabled",
-            "value": true
-          }
+          { "operator": "=", "property": "monitoring_enabled", "value": "true" }
         ]
       }
     },
     {
       "identifier": "security_score_passing",
-      "title": "Security Score ≥ 70",
+      "title": "Security Score >= 70",
       "level": "Silver",
       "query": {
         "combinator": "and",
         "conditions": [
-          {
-            "operator": ">=",
-            "property": "security_score",
-            "value": 70
-          }
-        ]
-      }
-    },
-    {
-      "identifier": "security_score_high",
-      "title": "Security Score ≥ 90",
-      "level": "Gold",
-      "query": {
-        "combinator": "and",
-        "conditions": [
-          {
-            "operator": ">=",
-            "property": "security_score",
-            "value": 90
-          }
+          { "operator": ">=", "property": "security_score", "value": "70" }
         ]
       }
     },
@@ -69,11 +48,18 @@
       "query": {
         "combinator": "and",
         "conditions": [
-          {
-            "operator": "=",
-            "property": "last_deploy_status",
-            "value": "success"
-          }
+          { "operator": "=", "property": "last_deploy_status", "value": "success" }
+        ]
+      }
+    },
+    {
+      "identifier": "security_score_high",
+      "title": "Security Score >= 90",
+      "level": "Gold",
+      "query": {
+        "combinator": "and",
+        "conditions": [
+          { "operator": ">=", "property": "security_score", "value": "90" }
         ]
       }
     },
@@ -84,11 +70,7 @@
       "query": {
         "combinator": "and",
         "conditions": [
-          {
-            "operator": "<",
-            "property": "monthly_cost_usd",
-            "value": 50
-          }
+          { "operator": "<", "property": "monthly_cost_usd", "value": "50" }
         ]
       }
     }
