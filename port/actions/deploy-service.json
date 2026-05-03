@@ -1,0 +1,77 @@
+{
+  "identifier": "deploy_service",
+  "title": "🚀 Deploy Service (AI-Validated)",
+  "icon": "DeployedVersion",
+  "description": "Deploy a service through Claude AI validation → ArgoCD GitOps pipeline",
+  "trigger": {
+    "type": "self-service",
+    "operation": "CREATE",
+    "userInputs": {
+      "properties": {
+        "service_name": {
+          "type": "string",
+          "title": "Service Name",
+          "description": "Lowercase, hyphens only (e.g. payment-service)",
+          "pattern": "^[a-z][a-z0-9-]{1,52}[a-z0-9]$"
+        },
+        "docker_image": {
+          "type": "string",
+          "title": "Docker Image",
+          "description": "Full image with tag (e.g. ghcr.io/org/app:v1.0.0)"
+        },
+        "replicas": {
+          "type": "number",
+          "title": "Replicas",
+          "default": 2,
+          "minimum": 1,
+          "maximum": 10
+        },
+        "cpu_request": {
+          "type": "string",
+          "title": "CPU Request",
+          "default": "100m",
+          "description": "e.g. 100m, 500m, 1"
+        },
+        "cpu_limit": {
+          "type": "string",
+          "title": "CPU Limit",
+          "default": "500m"
+        },
+        "memory_request": {
+          "type": "string",
+          "title": "Memory Request",
+          "default": "128Mi",
+          "description": "e.g. 128Mi, 512Mi, 1Gi"
+        },
+        "memory_limit": {
+          "type": "string",
+          "title": "Memory Limit",
+          "default": "512Mi"
+        },
+        "namespace": {
+          "type": "string",
+          "title": "Namespace",
+          "enum": ["dev", "staging"],
+          "default": "dev"
+        },
+        "environment": {
+          "type": "string",
+          "title": "Environment",
+          "enum": ["dev", "staging"],
+          "default": "dev"
+        }
+      },
+      "required": ["service_name", "docker_image", "namespace", "environment"]
+    }
+  },
+  "invocationMethod": {
+    "type": "GITHUB",
+    "org": "k-shevtsov",
+    "repo": "ai-enhanced-idp",
+    "workflow": "deploy-service.yml",
+    "workflowInputs": {
+      "port_payload": "{{ . }}"
+    },
+    "reportWorkflowStatus": true
+  }
+}

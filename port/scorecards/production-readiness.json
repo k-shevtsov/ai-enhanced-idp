@@ -1,0 +1,96 @@
+{
+  "identifier": "production_readiness",
+  "title": "Production Readiness",
+  "blueprint": "service",
+  "rules": [
+    {
+      "identifier": "has_owner",
+      "title": "Has Owner",
+      "level": "Bronze",
+      "query": {
+        "combinator": "and",
+        "conditions": [
+          {
+            "operator": "isNotEmpty",
+            "property": "owner"
+          }
+        ]
+      }
+    },
+    {
+      "identifier": "monitoring_enabled",
+      "title": "Monitoring Enabled",
+      "level": "Bronze",
+      "query": {
+        "combinator": "and",
+        "conditions": [
+          {
+            "operator": "=",
+            "property": "monitoring_enabled",
+            "value": true
+          }
+        ]
+      }
+    },
+    {
+      "identifier": "security_score_passing",
+      "title": "Security Score ≥ 70",
+      "level": "Silver",
+      "query": {
+        "combinator": "and",
+        "conditions": [
+          {
+            "operator": ">=",
+            "property": "security_score",
+            "value": 70
+          }
+        ]
+      }
+    },
+    {
+      "identifier": "security_score_high",
+      "title": "Security Score ≥ 90",
+      "level": "Gold",
+      "query": {
+        "combinator": "and",
+        "conditions": [
+          {
+            "operator": ">=",
+            "property": "security_score",
+            "value": 90
+          }
+        ]
+      }
+    },
+    {
+      "identifier": "deploy_success",
+      "title": "Last Deploy Successful",
+      "level": "Silver",
+      "query": {
+        "combinator": "and",
+        "conditions": [
+          {
+            "operator": "=",
+            "property": "last_deploy_status",
+            "value": "success"
+          }
+        ]
+      }
+    },
+    {
+      "identifier": "cost_optimized",
+      "title": "Cost < $50/month",
+      "level": "Gold",
+      "query": {
+        "combinator": "and",
+        "conditions": [
+          {
+            "operator": "<",
+            "property": "monthly_cost_usd",
+            "value": 50
+          }
+        ]
+      }
+    }
+  ]
+}

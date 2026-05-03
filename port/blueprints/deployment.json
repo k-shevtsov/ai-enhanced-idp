@@ -1,0 +1,78 @@
+{
+  "identifier": "deployment",
+  "title": "Deployment",
+  "icon": "Deployment",
+  "schema": {
+    "properties": {
+      "namespace": {
+        "type": "string",
+        "title": "Namespace",
+        "enum": ["dev", "staging"]
+      },
+      "environment": {
+        "type": "string",
+        "title": "Environment",
+        "enum": ["dev", "staging"]
+      },
+      "image": {
+        "type": "string",
+        "title": "Docker Image"
+      },
+      "replicas": {
+        "type": "number",
+        "title": "Replicas"
+      },
+      "cpu_request": {
+        "type": "string",
+        "title": "CPU Request"
+      },
+      "memory_request": {
+        "type": "string",
+        "title": "Memory Request"
+      },
+      "security_score": {
+        "type": "number",
+        "title": "Security Score (Claude)"
+      },
+      "risk_level": {
+        "type": "string",
+        "title": "Risk Level",
+        "enum": ["low", "medium", "high", "critical"],
+        "enumColors": {
+          "low": "green",
+          "medium": "yellow",
+          "high": "orange",
+          "critical": "red"
+        }
+      },
+      "monthly_cost_usd": {
+        "type": "number",
+        "title": "Monthly Cost (USD)"
+      },
+      "deployed_by": {
+        "type": "string",
+        "title": "Deployed By"
+      },
+      "deployed_at": {
+        "type": "string",
+        "title": "Deployed At",
+        "format": "date-time"
+      },
+      "validation_summary": {
+        "type": "string",
+        "title": "Claude Validation Summary"
+      }
+    },
+    "required": []
+  },
+  "mirrorProperties": {},
+  "calculationProperties": {},
+  "relations": {
+    "service": {
+      "title": "Service",
+      "target": "service",
+      "required": false,
+      "many": false
+    }
+  }
+}

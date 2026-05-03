@@ -1,0 +1,55 @@
+{
+  "identifier": "service",
+  "title": "Service",
+  "icon": "Microservice",
+  "schema": {
+    "properties": {
+      "language": {
+        "type": "string",
+        "title": "Language",
+        "enum": ["Python", "Go", "Node.js", "Java", "Rust", "Other"]
+      },
+      "owner": {
+        "type": "string",
+        "title": "Owner"
+      },
+      "repository": {
+        "type": "string",
+        "title": "Repository URL",
+        "format": "url"
+      },
+      "security_score": {
+        "type": "number",
+        "title": "Security Score",
+        "description": "0-100, calculated by Claude validation agent"
+      },
+      "monthly_cost_usd": {
+        "type": "number",
+        "title": "Estimated Monthly Cost (USD)"
+      },
+      "last_deploy_status": {
+        "type": "string",
+        "title": "Last Deploy Status",
+        "enum": ["success", "failed", "pending"],
+        "enumColors": {
+          "success": "green",
+          "failed": "red",
+          "pending": "yellow"
+        }
+      },
+      "last_deployed_at": {
+        "type": "string",
+        "title": "Last Deployed At",
+        "format": "date-time"
+      },
+      "monitoring_enabled": {
+        "type": "boolean",
+        "title": "Monitoring Enabled"
+      }
+    },
+    "required": ["owner"]
+  },
+  "mirrorProperties": {},
+  "calculationProperties": {},
+  "relations": {}
+}
