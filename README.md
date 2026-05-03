@@ -53,6 +53,9 @@ Port.io Scorecard update
 ### Production Readiness Scorecard — Bronze / Silver / Gold levels
 ![Scorecard](docs/screenshots/port-scorecard.png)
 
+### Service entity — Gold level, 100% scorecard rules passed
+![Entity Gold](docs/screenshots/port-entity-gold.png)
+
 ### Cluster status — 3 nodes + ArgoCD App-of-Apps Synced/Healthy
 ![make status](docs/screenshots/make-status.png)
 
