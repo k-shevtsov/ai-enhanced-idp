@@ -1,0 +1,180 @@
+name: Deploy Service (AI-Validated)
+
+on:
+  workflow_dispatch:
+    inputs:
+      port_payload:
+        description: "Port.io action payload (JSON)"
+        required: true
+        type: string
+
+env:
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+jobs:
+  # ── Job 1: AI Pre-deploy Validation ─────────────────────────────────────
+  validate:
+    name: AI Pre-deploy Validation
+    runs-on: ubuntu-latest
+    outputs:
+      approved: ${{ steps.validate.outputs.approved }}
+      risk_level: ${{ steps.validate.outputs.risk_level }}
+      summary: ${{ steps.validate.outputs.summary }}
+      security_score: ${{ steps.validate.outputs.security_score }}
+      monthly_cost: ${{ steps.validate.outputs.monthly_cost }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Claude Validation Agent
+        id: validate
+        run: |
+          python - << 'PYEOF'
+          import json, os, sys
+
+          payload = json.loads(os.environ["PORT_PAYLOAD"])
+          props   = payload.get("payload", {}).get("properties", payload)
+
+          manifest = {
+            "service_name":    props.get("service_name", "unknown"),
+            "image":           props.get("docker_image", ""),
+            "replicas":        props.get("replicas", 2),
+            "cpu_request":     props.get("cpu_request", "100m"),
+            "cpu_limit":       props.get("cpu_limit", "500m"),
+            "memory_request":  props.get("memory_request", "128Mi"),
+            "memory_limit":    props.get("memory_limit", "512Mi"),
+            "namespace":       props.get("namespace", "dev"),
+            "environment":     props.get("environment", "dev"),
+          }
+
+          from agent.validator import validate_manifest
+          result = validate_manifest(manifest)
+
+          print(f"Validation result: {json.dumps(result, indent=2)}")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            f.write(f"approved={'true' if result['approved'] else 'false'}\n")
+            f.write(f"risk_level={result.get('risk_level', 'unknown')}\n")
+            f.write(f"summary={result.get('summary', '')}\n")
+            f.write(f"security_score={result.get('security_score', 0)}\n")
+            f.write(f"monthly_cost={result['cost_estimate']['monthly_usd']}\n")
+
+          if not result["approved"]:
+            print(f"::error::Deployment REJECTED: {result.get('summary', '')}")
+            print(f"::error::Issues: {result.get('issues', [])}")
+            sys.exit(1)
+          PYEOF
+        env:
+          PORT_PAYLOAD: ${{ inputs.port_payload }}
+
+  # ── Job 2: GitOps Deploy via ArgoCD ─────────────────────────────────────
+  deploy:
+    name: GitOps Deploy via ArgoCD
+    needs: validate
+    if: needs.validate.outputs.approved == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Parse payload
+        id: parse
+        run: |
+          PROPS=$(echo '${{ inputs.port_payload }}' | python3 -c "
+          import json,sys
+          p = json.load(sys.stdin)
+          props = p.get('payload',{}).get('properties', p)
+          print(json.dumps(props))
+          ")
+          echo "props=$PROPS" >> $GITHUB_OUTPUT
+          echo "service_name=$(echo $PROPS | python3 -c \"import json,sys; print(json.load(sys.stdin).get('service_name','app'))\")" >> $GITHUB_OUTPUT
+          echo "namespace=$(echo $PROPS | python3 -c \"import json,sys; print(json.load(sys.stdin).get('namespace','dev'))\")" >> $GITHUB_OUTPUT
+
+      - name: Generate Helm values
+        run: |
+          SERVICE="${{ steps.parse.outputs.service_name }}"
+          NS="${{ steps.parse.outputs.namespace }}"
+          PROPS='${{ steps.parse.outputs.props }}'
+
+          mkdir -p "gitops/overlays/${NS}/${SERVICE}"
+
+          python3 - << PYEOF
+          import json, os
+          props = json.loads(os.environ["PROPS"])
+          service = os.environ["SERVICE"]
+          ns      = os.environ["NS"]
+
+          values = {
+            "service": {"name": service, "namespace": ns, "environment": ns},
+            "image": {
+              "repository": props.get("docker_image", "").rsplit(":", 1)[0],
+              "tag":        props.get("docker_image", ":latest").rsplit(":", 1)[-1],
+            },
+            "replicas": props.get("replicas", 2),
+            "resources": {
+              "requests": {
+                "cpu":    props.get("cpu_request", "100m"),
+                "memory": props.get("memory_request", "128Mi"),
+              },
+              "limits": {
+                "cpu":    props.get("cpu_limit", "500m"),
+                "memory": props.get("memory_limit", "512Mi"),
+              },
+            },
+          }
+
+          import yaml
+          path = f"gitops/overlays/{ns}/{service}/values.yaml"
+          with open(path, "w") as f:
+            f.write(f"# Auto-generated by AI-Enhanced IDP\n")
+            f.write(f"# Service: {service} | Namespace: {ns}\n")
+            f.write(f"# Validated by Claude agent | security_score: ${{ needs.validate.outputs.security_score }}\n")
+            f.write(f"# Estimated cost: $${{ needs.validate.outputs.monthly_cost }}/month\n\n")
+            yaml.dump(values, f, default_flow_style=False)
+
+          print(f"Generated: {path}")
+          PYEOF
+        env:
+          SERVICE: ${{ steps.parse.outputs.service_name }}
+          NS:      ${{ steps.parse.outputs.namespace }}
+          PROPS:   ${{ steps.parse.outputs.props }}
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Commit to GitOps repo
+        run: |
+          git config user.name  "AI-Enhanced IDP Bot"
+          git config user.email "bot@shevtsov.xyz"
+          git add gitops/
+          git diff --staged --quiet || git commit -m "deploy(${{ steps.parse.outputs.service_name }}): update values for ${{ steps.parse.outputs.namespace }}
+
+          Validated by Claude agent
+          Security score: ${{ needs.validate.outputs.security_score }}/100
+          Risk level: ${{ needs.validate.outputs.risk_level }}
+          Estimated cost: \$${{ needs.validate.outputs.monthly_cost }}/month
+          Actor: ${{ github.actor }}"
+          git push
+
+      - name: Summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | ${{ steps.parse.outputs.service_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Namespace | ${{ steps.parse.outputs.namespace }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Score | ${{ needs.validate.outputs.security_score }}/100 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Risk Level | ${{ needs.validate.outputs.risk_level }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Est. Cost | \$${{ needs.validate.outputs.monthly_cost }}/month |" >> $GITHUB_STEP_SUMMARY
+          echo "| Validation | ✅ Approved by Claude agent |" >> $GITHUB_STEP_SUMMARY

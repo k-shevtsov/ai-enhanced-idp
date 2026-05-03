@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: idp-app-of-apps
+  namespace: argocd
+spec:
+  project: idp-project
+  source:
+    repoURL: https://github.com/k-shevtsov/ai-enhanced-idp
+    targetRevision: HEAD
+    path: argocd/apps
+    directory:
+      recurse: false
+      exclude: "app-of-apps.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
