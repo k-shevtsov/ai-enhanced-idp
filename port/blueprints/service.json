@@ -1,5 +1,5 @@
 {
-  "identifier": "service",
+  "identifier": "idp_service",
   "title": "Service",
   "icon": "Microservice",
   "schema": {

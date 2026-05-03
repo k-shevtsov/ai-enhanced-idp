@@ -1,5 +1,5 @@
 {
-  "identifier": "deployment",
+  "identifier": "idp_deployment",
   "title": "Deployment",
   "icon": "Deployment",
   "schema": {
@@ -70,7 +70,7 @@
   "relations": {
     "service": {
       "title": "Service",
-      "target": "service",
+      "target": "idp_service",
       "required": false,
       "many": false
     }

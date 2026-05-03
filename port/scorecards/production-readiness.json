@@ -1,7 +1,7 @@
 {
   "identifier": "production_readiness",
   "title": "Production Readiness",
-  "blueprint": "service",
+  "blueprint": "idp_service",
   "rules": [
     {
       "identifier": "has_owner",
