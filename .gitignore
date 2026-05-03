@@ -1,0 +1,10 @@
+.env
+PROJECT_STATE.md
+__pycache__/
+*.pyc
+.pytest_cache/
+.python-version
+*.egg-info/
+dist/
+.venv/
+venv/
