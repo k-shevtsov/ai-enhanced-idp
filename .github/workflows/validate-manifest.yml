@@ -31,3 +31,44 @@ jobs:
         with:
           name: pytest-results
           path: .pytest_cache/
+
+  notify:
+    name: Slack Notification
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+    steps:
+      - name: Notify Slack
+        run: |
+          STATUS="${{ needs.test.result }}"
+          if [ "$STATUS" = "success" ]; then
+            EMOJI="✅"
+            TEXT="Tests passed on \`main\`"
+          else
+            EMOJI="❌"
+            TEXT="Tests failed on \`main\`"
+          fi
+          curl -s -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"text\": \"${EMOJI} *ai-enhanced-idp* — ${TEXT}\",
+              \"blocks\": [
+                {
+                  \"type\": \"section\",
+                  \"text\": {
+                    \"type\": \"mrkdwn\",
+                    \"text\": \"${EMOJI} *ai-enhanced-idp* — ${TEXT}\nActor: \`${{ github.actor }}\` | Branch: \`${{ github.ref_name }}\`\"
+                  }
+                },
+                {
+                  \"type\": \"actions\",
+                  \"elements\": [
+                    {
+                      \"type\": \"button\",
+                      \"text\": {\"type\": \"plain_text\", \"text\": \"View Run\"},
+                      \"url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+                    }
+                  ]
+                }
+              ]
+            }"
