@@ -91,15 +91,19 @@ jobs:
       - name: Parse payload
         id: parse
         run: |
-          PROPS=$(echo '${{ inputs.port_payload }}' | python3 -c "
-          import json,sys
-          p = json.load(sys.stdin)
-          props = p.get('payload',{}).get('properties', p)
-          print(json.dumps(props))
-          ")
-          echo "props=$PROPS" >> $GITHUB_OUTPUT
-          echo "service_name=$(echo $PROPS | python3 -c \"import json,sys; print(json.load(sys.stdin).get('service_name','app'))\")" >> $GITHUB_OUTPUT
-          echo "namespace=$(echo $PROPS | python3 -c \"import json,sys; print(json.load(sys.stdin).get('namespace','dev'))\")" >> $GITHUB_OUTPUT
+          python3 << 'PYEOF'
+          import json, os, sys
+
+          payload = json.loads(os.environ["PORT_PAYLOAD"])
+          props = payload.get("payload", {}).get("properties", payload)
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            f.write(f"props={json.dumps(props)}\n")
+            f.write(f"service_name={props.get('service_name', 'app')}\n")
+            f.write(f"namespace={props.get('namespace', 'dev')}\n")
+          PYEOF
+        env:
+          PORT_PAYLOAD: ${{ inputs.port_payload }}
 
       - name: Generate Helm values
         run: |
